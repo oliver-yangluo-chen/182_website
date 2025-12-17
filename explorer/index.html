@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLM Participation Explorer</title>
+    <link rel="stylesheet" href="assets/theme.css" />
+  </head>
+  <body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+      <div class="nav-container">
+        <div class="nav-brand">
+          <svg class="nav-logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#00d9ff;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <circle cx="16" cy="16" r="14" stroke="url(#logoGradient)" stroke-width="2" fill="none" opacity="0.8"/>
+            <path d="M8 16 L14 10 L18 14 L24 8" stroke="url(#logoGradient)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8" cy="16" r="2" fill="url(#logoGradient)"/>
+            <circle cx="14" cy="10" r="2" fill="url(#logoGradient)"/>
+            <circle cx="18" cy="14" r="2" fill="url(#logoGradient)"/>
+            <circle cx="24" cy="8" r="2" fill="url(#logoGradient)"/>
+          </svg>
+          <span class="nav-title">LLM Explorer</span>
+        </div>
+        <div class="nav-links">
+          <a href="#home" class="nav-link active" data-section="home">Home</a>
+          <a href="#browse" class="nav-link" data-section="browse">Browse</a>
+          <a href="#analytics" class="nav-link" data-section="analytics">Analytics</a>
+          <a href="#compare" class="nav-link" data-section="compare">Compare</a>
+          <a href="#assistant" class="nav-link" data-section="assistant">AI Assistant</a>
+        </div>
+        <div class="nav-controls">
+        <div class="appearance-control">
+            <button type="button" class="appearance-btn" data-mode="light" title="Light mode">
+              ☀️
+            </button>
+            <button type="button" class="appearance-btn" data-mode="dark" title="Dark mode">
+              🌙
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section with Stats Dashboard -->
+    <section id="home" class="section active">
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">Explore LLM Evaluations</h1>
+          <p class="hero-subtitle">Discover how students evaluated large language models across homework assignments</p>
+          
+          <!-- Prominent Search Bar -->
+          <div class="hero-search">
+            <div class="search-wrapper">
+              <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              <input
+                type="search"
+                id="hero-search-input"
+                class="hero-search-input"
+                placeholder="Search posts by title, content, author, or model..."
+                autocomplete="off"
+              />
+              <button type="button" class="search-clear" id="search-clear" hidden>×</button>
+            </div>
+            <div class="search-suggestions" id="search-suggestions" hidden></div>
+          </div>
+
+          <!-- Quick Filter Buttons -->
+          <div class="quick-filters">
+            <button class="quick-filter-btn active" data-filter="all">All Posts</button>
+            <button class="quick-filter-btn" data-filter="recent">Recent</button>
+            <button class="quick-filter-btn" data-filter="popular">Popular Models</button>
+          </div>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-dashboard" id="stats-dashboard">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label">Total Posts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-models">0</div>
+            <div class="stat-label">Unique Models</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-homeworks">0</div>
+            <div class="stat-label">Homeworks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-authors">0</div>
+            <div class="stat-label">Contributors</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Features/Help Section -->
+      <div class="features-section">
+        <div class="features-container">
+          <h2 class="features-title">🚀 Features & Guide</h2>
+          <p class="features-subtitle">Everything you need to know about using this explorer</p>
+          
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🔍</div>
+              <h3>Advanced Search</h3>
+              <p class="feature-description">Powerful full-text search across all post content, titles, authors, and model names. Instantly find posts discussing specific topics, models, or homework problems. Use <kbd>Ctrl/Cmd + K</kbd> for lightning-fast search access from anywhere. Perfect for quickly locating posts about a specific model's performance or finding all discussions about a particular homework problem.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">🏷️</div>
+              <h3>Smart Filtering</h3>
+              <p class="feature-description">Multi-dimensional filtering system that lets you drill down into exactly what you need. Filter by homework assignment to see all evaluations for a specific problem set, or by model to compare how different LLMs performed. Quick filters for recent posts, popular models, or time-based views help you discover trending content. Click any filter tag to instantly apply or remove filters - no need to navigate through menus.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h3>Analytics Dashboard</h3>
+              <p class="feature-description">Comprehensive data visualization suite that transforms raw post data into actionable insights. Interactive bar charts reveal which models were evaluated most frequently and which homework assignments generated the most discussion. Timeline visualizations show activity patterns over time, helping you understand trends. Contributor rankings highlight the most active students, while keyword clouds surface the most discussed topics. All charts are interactive and update in real-time as you filter.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">⚖️</div>
+              <h3>Compare Posts</h3>
+              <p class="feature-description">Side-by-side comparison tool that makes it easy to analyze how different students evaluated the same model on the same homework, or how the same student evaluated different models. Perfect for understanding variations in evaluation approaches, identifying common patterns, or spotting outliers. The comparison view shows all key details including content previews, metadata, and homework links, making it effortless to spot differences and similarities.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">🔗</div>
+              <h3>Similar Posts Discovery</h3>
+              <p class="feature-description">Intelligent post recommendations that automatically surface related content when viewing any post. Discover other evaluations of the same model, explore how other students approached the same homework problem, or find posts from the same author. This feature transforms passive browsing into an exploratory journey, helping you build a comprehensive understanding of how different models performed across various contexts. Each similar post is just one click away.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">📄</div>
+              <h3>Homework PDF Integration</h3>
+              <p class="feature-description">Seamless access to original homework assignments directly from each post. Every post automatically links to its corresponding homework PDF, eliminating the need to search elsewhere. The inline PDF preview lets you reference the assignment while reading student evaluations without leaving the page. This context is crucial for understanding what problems students were solving and how model performance relates to specific assignment requirements.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">🤖</div>
+              <h3>AI Assistant</h3>
+              <p class="feature-description">Your intelligent research companion powered by Llama 3.2 1B running entirely in your browser - no data leaves your device. Ask questions about model performance, get summaries of trends, or explore patterns across posts. The assistant understands the context of all posts and can help you find information faster than manual browsing. Perfect for quick queries like "Which models performed best on HW3?" or "What were common issues students found?"</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">⌨️</div>
+              <h3>Keyboard Shortcuts</h3>
+              <p class="feature-description">Power-user navigation system for lightning-fast workflow. Navigate between sections instantly: <kbd>1</kbd> Home, <kbd>2</kbd> Browse, <kbd>3</kbd> Analytics, <kbd>4</kbd> Compare, <kbd>5</kbd> Assistant. Press <kbd>Esc</kbd> to close modals or clear overlays. These shortcuts eliminate mouse navigation, making it possible to explore posts rapidly and efficiently. Once you learn them, you'll navigate the site at the speed of thought.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">👁️</div>
+              <h3>Multiple View Modes</h3>
+              <p class="feature-description">Three distinct viewing modes optimized for different exploration styles. Grid view provides a visual overview perfect for scanning many posts at once. List view offers a compact, information-dense format ideal for reading through many posts sequentially. Timeline view organizes posts chronologically, revealing temporal patterns and evolution of discussions. Switch between modes instantly to match your current task - browsing, reading, or analyzing trends.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">💾</div>
+              <h3>Export & Download</h3>
+              <p class="feature-description">Export your filtered results as JSON files for offline analysis or sharing. Perfect for researchers who want to analyze the data in their own tools, create reports, or archive specific filtered views. The export includes all post metadata, content previews, and links. One-click download with automatic file naming based on the current date.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">🔗</div>
+              <h3>Shareable Links</h3>
+              <p class="feature-description">Generate shareable URLs that encode your current filters, search terms, and view preferences. Share specific filtered views with classmates or instructors - when they open the link, they'll see exactly what you were looking at. All filters are preserved in the URL, making it easy to bookmark or share interesting filtered views.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">⭐</div>
+              <h3>Bookmarks System</h3>
+              <p class="feature-description">Save your favorite posts for quick access later. Click the bookmark icon on any post card to save it, then use the Bookmarks button to view all your saved posts. Bookmarks are stored locally in your browser, so they persist across sessions. Perfect for keeping track of posts you want to reference later or share with others.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">⏱️</div>
+              <h3>Reading Time Estimates</h3>
+              <p class="feature-description">Every post displays an estimated reading time based on word count, helping you plan your reading session. Calculated at 200 words per minute, these estimates help you quickly identify quick reads versus longer analyses. No more guessing how long a post will take to read!</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h3>Interactive Charts</h3>
+              <p class="feature-description">Charts in the Analytics section are fully interactive - click any bar to instantly filter posts by that category. Click a homework bar to see all posts for that assignment, or click a model bar to filter by that model. This transforms static visualizations into powerful filtering tools, making data exploration intuitive and fast.</p>
+            </div>
+            
+            <div class="feature-card">
+              <div class="feature-icon">📋</div>
+              <h3>Copy Post Links</h3>
+              <p class="feature-description">Each post card has a copy link button (visible on hover) that lets you instantly copy a direct link to that specific post. Perfect for sharing individual posts in discussions, referencing specific evaluations, or creating your own curated lists. The link includes the post ID for direct navigation.</p>
+            </div>
+          </div>
+          
+          <div class="features-tips">
+            <h3>💡 Pro Tips</h3>
+            <ul>
+              <li>Click on chart bars in Analytics to filter posts by that category - charts are interactive!</li>
+              <li>Use the Export button to download filtered results as JSON for offline analysis</li>
+              <li>Share filtered views with classmates using the Share button - URLs encode all filters</li>
+              <li>Bookmark interesting posts for quick access later - they're saved in your browser</li>
+              <li>Hover over post cards to see bookmark and copy link buttons</li>
+              <li>Use the back-to-top button (appears on scroll) to quickly return to the top</li>
+              <li>All data is processed locally - nothing leaves your browser</li>
+              <li>Posts open in a modal - press Escape or click outside to close</li>
+              <li>Filter tags show active filters - click the × to remove them</li>
+              <li>Reading time estimates help you plan your reading session</li>
+                </ul>
+              </div>
+              </div>
+            </div>
+          </section>
+
+    <!-- Browse Section -->
+    <section id="browse" class="section">
+      <div class="browse-container">
+        <!-- Filter Bar with Tags -->
+        <div class="filter-bar">
+          <div class="filter-section">
+            <h3 class="filter-title">Filters</h3>
+            <div class="filter-tags" id="filter-tags">
+              <!-- Tags will be dynamically generated -->
+            </div>
+          </div>
+          
+          <div class="view-controls">
+            <div class="browse-actions">
+              <button id="export-btn" class="action-btn" title="Export filtered results">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export
+              </button>
+              <button id="share-btn" class="action-btn" title="Copy shareable link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="18" cy="5" r="3"></circle>
+                  <circle cx="6" cy="12" r="3"></circle>
+                  <circle cx="18" cy="19" r="3"></circle>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                Share
+              </button>
+              <button id="bookmark-toggle" class="action-btn" title="View bookmarks">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Bookmarks
+              </button>
+            </div>
+            <div class="view-toggle">
+              <button class="view-btn active" data-view="grid" title="Grid view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                </svg>
+              </button>
+              <button class="view-btn" data-view="list" title="List view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+              <button class="view-btn" data-view="timeline" title="Timeline view">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </button>
+            </div>
+            <select id="sort-select" class="sort-select">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="homework">Homework (A-Z)</option>
+              <option value="model">Model (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="results-summary" id="results-summary">
+          <span id="results-count">0 posts</span>
+          <span class="results-separator">•</span>
+          <span id="results-filters"></span>
+        </div>
+
+        <!-- Posts Container -->
+        <div class="posts-container" id="posts-container">
+          <div class="posts-grid" id="posts-grid" data-view="grid">
+            <!-- Posts will be dynamically generated -->
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" hidden>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <h3>No posts found</h3>
+          <p>Try adjusting your filters or search query</p>
+        </div>
+      </div>
+          </section>
+
+    <!-- Analytics Section -->
+    <section id="analytics" class="section">
+      <div class="analytics-container">
+        <div class="analytics-header">
+          <h2>📊 Analytics & Statistics</h2>
+          <p class="analytics-subtitle">Explore patterns, trends, and distributions across all posts</p>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="analytics-grid">
+          <!-- Homework Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>📚 Posts by Homework</h3>
+              <p class="analytics-card-subtitle">Distribution across assignments</p>
+            </div>
+            <div class="chart-container" id="homework-chart">
+              <!-- Chart will be generated here -->
+            </div>
+          </div>
+
+          <!-- Model Distribution -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>🤖 Posts by Model</h3>
+              <p class="analytics-card-subtitle">Which models were evaluated most?</p>
+            </div>
+            <div class="chart-container" id="model-chart">
+              <!-- Chart will be generated here -->
+            </div>
+          </div>
+
+          <!-- Timeline Trends -->
+          <div class="analytics-card full-width">
+            <div class="analytics-card-header">
+              <h3>📈 Post Activity Timeline</h3>
+              <p class="analytics-card-subtitle">Posts over time</p>
+            </div>
+            <div class="chart-container" id="timeline-chart">
+              <!-- Timeline chart -->
+            </div>
+          </div>
+
+
+          <!-- Top Contributors -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>👥 Top Contributors</h3>
+              <p class="analytics-card-subtitle">Most active authors</p>
+            </div>
+            <div class="contributors-list" id="contributors-list">
+              <!-- Contributors list -->
+            </div>
+          </div>
+
+          <!-- Popular Keywords -->
+          <div class="analytics-card">
+            <div class="analytics-card-header">
+              <h3>🔍 Popular Keywords</h3>
+              <p class="analytics-card-subtitle">Most mentioned terms</p>
+            </div>
+            <div class="keywords-cloud" id="keywords-cloud">
+              <!-- Keyword visualization -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Post Modal -->
+    <div id="post-modal-backdrop" class="post-modal-backdrop" hidden>
+      <div id="post-modal" class="post-modal" role="dialog" aria-modal="true">
+        <button id="post-modal-close" class="post-modal-close" type="button" aria-label="Close">
+          ×
+        </button>
+        <div class="post-modal-content">
+        <header class="post-modal-header">
+          <h2 id="post-modal-title"></h2>
+            <div class="post-modal-meta" id="post-modal-meta"></div>
+            <div class="post-modal-badges" id="post-modal-badges"></div>
+            <div class="post-modal-files" id="post-modal-files"></div>
+        </header>
+        <section class="post-modal-body">
+            <div id="post-modal-body" class="post-modal-text"></div>
+          </section>
+          <section class="post-modal-homework">
+            <div class="homework-link-section">
+              <h4>📚 Related Homework</h4>
+              <div id="homework-link-container"></div>
+              <div id="homework-preview-container" class="homework-preview-container" hidden></div>
+            </div>
+          </section>
+          
+          <section class="post-modal-similar">
+            <div class="similar-posts-section">
+              <h4>🔗 Similar Posts</h4>
+              <div id="similar-posts-container" class="similar-posts-grid"></div>
+            </div>
+        </section>
+          
+        <section class="post-modal-qa">
+          <div class="qa-header">
+            <h4>Ask about this thread</h4>
+            <span id="qa-status" class="qa-status"></span>
+          </div>
+          <div id="qa-messages" class="qa-messages"></div>
+          <form id="qa-form" class="qa-form">
+              <input type="text" id="qa-input" class="qa-input" placeholder="Ask a question..." autocomplete="off" />
+            <button type="submit" id="qa-send" class="qa-send">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </form>
+        </section>
+      </div>
+      </div>
+    </div>
+
+    <!-- Comparison Section -->
+    <section id="compare" class="section">
+      <div class="compare-container">
+        <div class="compare-header">
+          <h2>⚖️ Compare Posts</h2>
+          <p class="compare-subtitle">Side-by-side comparison of posts</p>
+    </div>
+
+        <div class="compare-controls">
+          <div class="compare-select-group">
+            <label>Post 1:</label>
+            <select id="compare-post-1" class="compare-select">
+              <option value="">Select a post...</option>
+            </select>
+          </div>
+          <div class="compare-select-group">
+            <label>Post 2:</label>
+            <select id="compare-post-2" class="compare-select">
+              <option value="">Select a post...</option>
+            </select>
+          </div>
+          <button id="compare-add-post" class="compare-add-btn" hidden>+ Add Post 3</button>
+    </div>
+
+        <div id="compare-results" class="compare-results" hidden>
+          <div class="compare-posts-grid" id="compare-posts-grid">
+            <!-- Comparison cards will be rendered here -->
+          </div>
+        </div>
+        
+        <div class="compare-empty" id="compare-empty">
+          <p>Select two posts above to compare them side-by-side</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Assistant Section -->
+    <section id="assistant" class="section">
+      <div class="assistant-container">
+        <div class="assistant-header">
+          <h2>🤖 AI Assistant</h2>
+          <p class="assistant-subtitle">Ask questions about the posts. Powered by Llama 3.2 1B running in your browser.</p>
+            </div>
+        
+        <div class="assistant-panel">
+          <div class="assistant-status-bar">
+            <span id="assistant-status" class="assistant-status">Ready to chat</span>
+            <button id="assistant-clear" class="assistant-clear-btn" type="button" title="Clear conversation">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear
+            </button>
+          </div>
+
+          <div id="assistant-messages" class="assistant-messages">
+            <div class="assistant-message assistant">
+              <p>Hi! I'm your AI assistant. Ask me anything about the posts, models, or homeworks. I'll help you explore the data!</p>
+          </div>
+        </div>
+
+          <div id="assistant-loading" class="assistant-loading" hidden>
+          <div class="loading-spinner"></div>
+            <span id="assistant-loading-text">Loading model...</span>
+          <div class="progress-bar">
+              <div id="assistant-progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+          <form id="assistant-form" class="assistant-form">
+          <input
+            type="text"
+              id="assistant-input" 
+              class="assistant-input" 
+              placeholder="Ask a question about the posts..." 
+            autocomplete="off"
+          />
+            <button type="submit" id="assistant-send" class="assistant-send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </div>
+    </section>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="back-to-top" aria-label="Back to top" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 15l-6-6-6 6"/>
+      </svg>
+    </button>
+
+    <footer class="site-footer">
+      <p>
+        Built as a lightweight, static explorer for LLM evaluation posts.
+        Data never leaves your machine.
+      </p>
+    </footer>
+
+    <script type="module" src="assets/app.js"></script>
+    <script type="module" src="assets/assistant.js"></script>
+  </body>
+</html>
