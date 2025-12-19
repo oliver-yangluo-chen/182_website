@@ -304,10 +304,15 @@ img {
 .appearance-btn {
   background: transparent;
   border: 1px solid var(--border);
-  padding: var(--spacing-sm);
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: all var(--transition-fast);
 }
 
@@ -574,13 +579,13 @@ img {
   margin-bottom: var(--spacing-xl);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-start; /* allow multi-line tags without vertical centering issues */
   gap: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
 .filter-section {
-  flex: 1;
+  flex: 1 1 900px; /* let the filters/tags take most of the row */
   min-width: 300px;
 }
 
@@ -643,6 +648,7 @@ img {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
+  width: 100%; /* allow chips to use full filter-section width */
 }
 
 .filter-tag {
@@ -710,6 +716,8 @@ img {
   align-items: center;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+  flex: 0 0 auto; /* stop growing, preserve intrinsic width */
+  justify-content: flex-start;
 }
 
 .browse-actions {
@@ -719,10 +727,12 @@ img {
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0 var(--spacing-md);
+  height: 36px; /* normalize height */
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -732,6 +742,7 @@ img {
   cursor: pointer;
   transition: all var(--transition-fast);
   backdrop-filter: blur(10px);
+  line-height: 1; /* avoid baseline misalignment */
 }
 
 .action-btn:hover {
@@ -745,6 +756,7 @@ img {
 .action-btn svg {
   width: 16px;
   height: 16px;
+  display: block; /* avoid baseline misalignment */
 }
 
 .action-btn.has-bookmarks::after {
@@ -764,10 +776,12 @@ img {
   border-radius: var(--radius-md);
   padding: var(--spacing-xs);
   gap: var(--spacing-xs);
+  align-items: center;
 }
 
 .view-btn {
-  padding: var(--spacing-sm);
+  width: 36px;
+  height: 36px;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -793,14 +807,22 @@ img {
   font-weight: 600;
 }
 
+.view-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .sort-select {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0 var(--spacing-md);
+  height: 36px; /* match action-btn height */
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-panel);
   color: var(--fg-primary);
   font-size: 0.875rem;
   cursor: pointer;
+  line-height: 36px;
 }
 
 .results-summary {
