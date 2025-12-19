@@ -2221,8 +2221,44 @@ img {
 
 .compare-posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--spacing-xl);
+}
+
+.compare-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+}
+
+.compare-column-header {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--fg-primary);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-column-empty {
+  color: var(--fg-muted);
+  font-size: 0.95rem;
+  padding: var(--spacing-lg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.compare-column-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+@media (max-width: 1100px) {
+  .compare-posts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .compare-post-card {

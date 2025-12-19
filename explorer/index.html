@@ -470,12 +470,26 @@
               <option value="">Choose a homework...</option>
             </select>
           </div>
+
+          <div class="compare-select-group">
+            <label for="compare-model-a">First Model:</label>
+            <select id="compare-model-a" class="compare-select" disabled>
+              <option value="">Choose a model...</option>
+            </select>
+          </div>
+
+          <div class="compare-select-group">
+            <label for="compare-model-b">Second Model:</label>
+            <select id="compare-model-b" class="compare-select" disabled>
+              <option value="">Choose a model...</option>
+            </select>
+          </div>
         </div>
 
         <div id="compare-results" class="compare-results" hidden>
           <div class="compare-llms-header">
             <h3 id="compare-homework-title"></h3>
-            <p class="compare-instructions">All LLM solutions for this homework are shown below for easy comparison</p>
+            <p class="compare-instructions">Posts for the selected models are shown side-by-side</p>
           </div>
           <div class="compare-posts-grid" id="compare-posts-grid">
             <!-- Comparison cards will be rendered here -->
@@ -483,7 +497,7 @@
         </div>
         
         <div class="compare-empty" id="compare-empty">
-          <p>Select a homework assignment above to see all LLM solutions for comparison</p>
+          <p>Select a homework and two models above to compare their posts side-by-side</p>
         </div>
       </div>
     </section>
