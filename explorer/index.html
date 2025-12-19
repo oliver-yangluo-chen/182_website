@@ -33,6 +33,7 @@
           <a href="#browse" class="nav-link" data-section="browse">Browse</a>
           <a href="#analytics" class="nav-link" data-section="analytics">Analytics</a>
           <a href="#compare" class="nav-link" data-section="compare">Compare</a>
+          <a href="#help" class="nav-link" data-section="help">Help</a>
           <a href="#assistant" class="nav-link" data-section="assistant">AI Assistant</a>
         </div>
         <div class="nav-controls">
@@ -74,12 +75,6 @@
             <div class="search-suggestions" id="search-suggestions" hidden></div>
           </div>
 
-          <!-- Quick Filter Buttons -->
-          <div class="quick-filters">
-            <button class="quick-filter-btn active" data-filter="all">All Posts</button>
-            <button class="quick-filter-btn" data-filter="recent">Recent</button>
-            <button class="quick-filter-btn" data-filter="popular">Popular Models</button>
-          </div>
         </div>
 
         <!-- Statistics Dashboard -->
@@ -102,9 +97,13 @@
           </div>
         </div>
       </div>
-      
-      <!-- Features/Help Section -->
-      <div class="features-section">
+
+    </section>
+
+    <!-- Help Section -->
+    <section id="help" class="section">
+      <div class="help-container">
+        <div class="features-section">
         <div class="features-container">
           <h2 class="features-title">🚀 Features & Guide</h2>
           <p class="features-subtitle">Everything you need to know about using this explorer</p>
@@ -155,7 +154,7 @@
             <div class="feature-card">
               <div class="feature-icon">⌨️</div>
               <h3>Keyboard Shortcuts</h3>
-              <p class="feature-description">Power-user navigation system for lightning-fast workflow. Navigate between sections instantly: <kbd>1</kbd> Home, <kbd>2</kbd> Browse, <kbd>3</kbd> Analytics, <kbd>4</kbd> Compare, <kbd>5</kbd> Assistant. Press <kbd>Esc</kbd> to close modals or clear overlays. These shortcuts eliminate mouse navigation, making it possible to explore posts rapidly and efficiently. Once you learn them, you'll navigate the site at the speed of thought.</p>
+              <p class="feature-description">Power-user navigation system for lightning-fast workflow. Navigate between sections instantly: <kbd>1</kbd> Home, <kbd>2</kbd> Browse, <kbd>3</kbd> Analytics, <kbd>4</kbd> Compare, <kbd>5</kbd> Assistant, <kbd>6</kbd> Help. Press <kbd>Esc</kbd> to close modals or clear overlays. These shortcuts eliminate mouse navigation, making it possible to explore posts rapidly and efficiently. Once you learn them, you'll navigate the site at the speed of thought.</p>
             </div>
             
             <div class="feature-card">
@@ -218,7 +217,8 @@
               </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
     <!-- Browse Section -->
     <section id="browse" class="section">
@@ -313,6 +313,7 @@
           <span id="results-count">0 posts</span>
           <span class="results-separator">•</span>
           <span id="results-filters"></span>
+          <button type="button" class="results-filter-clear" id="results-clear-search" hidden aria-label="Clear search filter">×</button>
         </div>
 
         <!-- Posts Container -->

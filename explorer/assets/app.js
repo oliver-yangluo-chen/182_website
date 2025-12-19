@@ -26,8 +26,7 @@ const state = {
   activeFilters: {
     homework: null,
     model: null,
-    search: "",
-    quickFilter: "all"
+    search: ""
   },
   currentView: "grid",
   currentSection: "home",
@@ -53,7 +52,6 @@ function cacheElements() {
   // Hero/Search
   els.heroSearchInput = document.getElementById("hero-search-input");
   els.searchClear = document.getElementById("search-clear");
-  els.quickFilters = document.querySelectorAll(".quick-filter-btn");
   
   // Stats
   els.statTotal = document.getElementById("stat-total");
@@ -70,6 +68,7 @@ function cacheElements() {
   els.resultsSummary = document.getElementById("results-summary");
   els.resultsCount = document.getElementById("results-count");
   els.resultsFilters = document.getElementById("results-filters");
+  els.resultsClearSearch = document.getElementById("results-clear-search");
   els.postsGrid = document.getElementById("posts-grid");
   els.emptyState = document.getElementById("empty-state");
   
@@ -234,19 +233,26 @@ function switchSection(sectionName) {
 function updateStatistics() {
   const posts = state.allPosts;
   const homeworks = new Set();
+  const homeworksKnown = new Set();
   const models = new Set();
   const authors = new Set();
 
   posts.forEach(post => {
     const m = post.metrics || {};
-    if (m.homework_id) homeworks.add(m.homework_id);
+    if (m.homework_id) {
+      const hw = String(m.homework_id).trim();
+      homeworks.add(hw);
+      if (hw.toLowerCase() !== "unknown") {
+        homeworksKnown.add(hw);
+      }
+    }
     if (m.model_name) models.add(m.model_name);
     if (post.user?.name) authors.add(post.user.name);
   });
   
   if (els.statTotal) els.statTotal.textContent = posts.length.toLocaleString();
   if (els.statModels) els.statModels.textContent = models.size;
-  if (els.statHomeworks) els.statHomeworks.textContent = homeworks.size;
+  if (els.statHomeworks) els.statHomeworks.textContent = homeworksKnown.size;
   if (els.statAuthors) els.statAuthors.textContent = authors.size;
   
   // Store for tag generation
@@ -360,51 +366,61 @@ function buildFilterTags() {
 // =========================================
 function setupSearch() {
   if (!els.heroSearchInput) return;
+
+  const syncSearchClearVisibility = () => {
+    const hasSearch = !!state.activeFilters.search;
+    if (els.searchClear) els.searchClear.hidden = !hasSearch;
+    if (els.resultsClearSearch) els.resultsClearSearch.hidden = !hasSearch;
+  };
+
+  const clearSearch = () => {
+    state.activeFilters.search = "";
+    if (els.heroSearchInput) els.heroSearchInput.value = "";
+    syncSearchClearVisibility();
+  };
   
   let searchTimeout;
   els.heroSearchInput.addEventListener("input", (e) => {
+    const nextSearch = e.target.value.toLowerCase().trim();
+    state.activeFilters.search = nextSearch;
+    syncSearchClearVisibility();
+
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      state.activeFilters.search = e.target.value.toLowerCase().trim();
-      if (els.searchClear) {
-        els.searchClear.hidden = !state.activeFilters.search;
+      if (state.currentSection === "browse") {
+        applyFiltersAndRender();
       }
-      applyFiltersAndRender();
     }, 300);
+  });
+
+  els.heroSearchInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    state.activeFilters.search = els.heroSearchInput.value.toLowerCase().trim();
+    if (els.searchClear) {
+      els.searchClear.hidden = !state.activeFilters.search;
+    }
+    switchSection("browse");
   });
   
   if (els.searchClear) {
     els.searchClear.addEventListener("click", () => {
-      els.heroSearchInput.value = "";
-      state.activeFilters.search = "";
-      els.searchClear.hidden = true;
-      applyFiltersAndRender();
+      clearSearch();
+      if (state.currentSection === "browse") {
+        applyFiltersAndRender();
+      }
     });
   }
-  
-  // Sync search between hero and browse sections
-  els.heroSearchInput.addEventListener("input", () => {
-    if (state.currentSection === "browse") {
-      applyFiltersAndRender();
-    }
-  });
-}
 
-// =========================================
-// QUICK FILTERS
-// =========================================
-function setupQuickFilters() {
-  els.quickFilters.forEach(btn => {
-      btn.addEventListener("click", () => {
-      els.quickFilters.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      
-      const filter = btn.dataset.filter;
-      state.activeFilters.quickFilter = filter;
-      applyFiltersAndRender();
-      });
+  if (els.resultsClearSearch) {
+    els.resultsClearSearch.addEventListener("click", () => {
+      clearSearch();
+      if (state.currentSection === "browse") {
+        applyFiltersAndRender();
+      }
     });
   }
+}
 
 // =========================================
 // VIEW MODES
@@ -451,17 +467,6 @@ function applyFiltersAndRender() {
       if (!haystack.includes(searchText)) {
         return false;
       }
-    }
-    
-    // Quick filters
-    if (state.activeFilters.quickFilter === "recent") {
-      const postDate = post.created_at ? new Date(post.created_at) : null;
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      if (!postDate || postDate < weekAgo) return false;
-    } else if (state.activeFilters.quickFilter === "popular") {
-      const popularModels = new Set(["GPT-5.1", "ChatGPT 5.1", "Claude", "Gemini Pro", "DeepSeek"]);
-      if (!m.model_name || !popularModels.has(m.model_name)) return false;
     }
     
     return true;
@@ -539,6 +544,10 @@ function updateResultsSummary() {
     els.resultsFilters.textContent = activeFilters.length > 0 
       ? activeFilters.join(", ")
       : "All posts";
+
+    if (els.resultsClearSearch) {
+      els.resultsClearSearch.hidden = !state.activeFilters.search;
+    }
   }
 }
 
@@ -558,20 +567,26 @@ function renderPosts() {
   
   const postsHtml = state.filtered.map((post, index) => renderPostCard(post, index)).join("");
   els.postsGrid.innerHTML = postsHtml;
-  
+
+  wirePostCardInteractions(els.postsGrid, state.filtered);
+}
+
+function wirePostCardInteractions(containerEl, postsRef) {
+  if (!containerEl) return;
+
   // Add click handlers
-  els.postsGrid.querySelectorAll(".post-card").forEach(card => {
+  containerEl.querySelectorAll(".post-card").forEach(card => {
     card.addEventListener("click", (e) => {
       if (e.target.closest("a") || e.target.closest("button")) return;
       const index = parseInt(card.dataset.index);
-      if (!isNaN(index) && state.filtered[index]) {
-        openPostModal(state.filtered[index]);
+      if (!isNaN(index) && postsRef[index]) {
+        openPostModal(postsRef[index]);
       }
     });
   });
-  
+
   // Add bookmark handlers
-  els.postsGrid.querySelectorAll(".post-bookmark-btn").forEach(btn => {
+  containerEl.querySelectorAll(".post-bookmark-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const postId = btn.dataset.postId;
@@ -579,9 +594,9 @@ function renderPosts() {
       renderPosts();
     });
   });
-  
+
   // Add copy link handlers
-  els.postsGrid.querySelectorAll(".post-copy-link-btn").forEach(btn => {
+  containerEl.querySelectorAll(".post-copy-link-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       const postId = btn.dataset.postId;
@@ -1510,8 +1525,8 @@ function setupKeyboardShortcuts() {
     }
     
     // Number keys for navigation
-    if (e.key >= "1" && e.key <= "5" && !e.ctrlKey && !e.metaKey) {
-      const sections = ["home", "browse", "analytics", "compare", "assistant"];
+    if (e.key >= "1" && e.key <= "6" && !e.ctrlKey && !e.metaKey) {
+      const sections = ["home", "browse", "analytics", "compare", "assistant", "help"];
       const index = parseInt(e.key) - 1;
       if (sections[index]) {
         switchSection(sections[index]);
@@ -1599,7 +1614,6 @@ function updateShareableLink() {
   if (state.activeFilters.homework) params.set("hw", state.activeFilters.homework);
   if (state.activeFilters.model) params.set("model", state.activeFilters.model);
   if (state.activeFilters.search) params.set("search", state.activeFilters.search);
-  if (state.activeFilters.quickFilter !== "all") params.set("filter", state.activeFilters.quickFilter);
   if (state.currentView !== "grid") params.set("view", state.currentView);
   
   const url = `${window.location.origin}${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
@@ -1745,9 +1759,6 @@ function setupURLParams() {
       els.heroSearchInput.value = state.activeFilters.search;
     }
   }
-  if (params.has("filter")) {
-    state.activeFilters.quickFilter = params.get("filter");
-  }
   if (params.has("view")) {
     state.currentView = params.get("view");
   }
@@ -1770,7 +1781,6 @@ async function init() {
   setupTheme();
   setupNavigation();
   setupSearch();
-  setupQuickFilters();
   setupViewModes();
   setupAnalytics();
   setupQA();
