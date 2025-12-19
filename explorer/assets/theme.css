@@ -1370,6 +1370,46 @@ img {
   display: block;
 }
 
+.homework-preview-body {
+  padding: var(--spacing-md);
+}
+
+.homework-preview-status {
+  color: var(--fg-secondary);
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.homework-preview-pages {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.pdfjs-page {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+}
+
+.homework-preview-fallback a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.homework-preview-fallback a:hover {
+  text-decoration: underline;
+}
+
+.homework-preview-error {
+  margin-top: var(--spacing-xs);
+  color: var(--fg-muted);
+  font-size: 0.75rem;
+}
+
 .no-homework-link {
   color: var(--fg-muted);
   font-size: 0.875rem;

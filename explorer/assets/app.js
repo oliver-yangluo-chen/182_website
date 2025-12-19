@@ -7,8 +7,9 @@ const INSIGHTS_URL = "data/insights.json";
 const MANIFEST_URL = "files/manifest.json";
 const THEME_KEY = "spa-theme-mode";
 
-const PDFJS_CDN = "https://esm.run/pdfjs-dist@3.11.174";
-const PDFJS_WORKER_CDN = "https://esm.run/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+// Use the stable UMD build to avoid ESM/worker incompatibilities across browsers.
+const PDFJS_CDN = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const PDFJS_WORKER_CDN = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const state = {
   allPosts: [],
@@ -22,6 +23,8 @@ const state = {
   qaWebllm: null,
   qaGenerating: false,
   pdfLib: null,
+  pdfLibLoading: null,
+  pdfRenderToken: 0,
   // New state
   activeFilters: {
     homework: null,
@@ -705,6 +708,143 @@ function formatCardDate(isoString) {
 // =========================================
 // MODAL
 // =========================================
+function clearHomeworkPreview() {
+  if (!els.homeworkPreviewContainer) return;
+  state.pdfRenderToken += 1;
+  els.homeworkPreviewContainer.hidden = true;
+  els.homeworkPreviewContainer.innerHTML = "";
+}
+
+async function ensurePdfJsLoaded() {
+  if (state.pdfLib) return state.pdfLib;
+  if (state.pdfLibLoading) return state.pdfLibLoading;
+
+  state.pdfLibLoading = (async () => {
+    const existing = globalThis.pdfjsLib;
+    if (existing?.getDocument) {
+      existing.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
+      state.pdfLib = existing;
+      return existing;
+    }
+
+    await new Promise((resolve, reject) => {
+      const prior = document.querySelector(`script[data-pdfjs-src="${CSS.escape(PDFJS_CDN)}"]`);
+      if (prior) {
+        prior.addEventListener("load", () => resolve(), { once: true });
+        prior.addEventListener("error", () => reject(new Error("Failed to load pdf.js script")), { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = PDFJS_CDN;
+      script.async = true;
+      script.defer = true;
+      script.dataset.pdfjsSrc = PDFJS_CDN;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Failed to load pdf.js script"));
+      document.head.appendChild(script);
+    });
+
+    const pdfjs = globalThis.pdfjsLib;
+    if (!pdfjs?.getDocument) {
+      throw new Error("Failed to load pdf.js (window.pdfjsLib missing)");
+    }
+    pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
+    state.pdfLib = pdfjs;
+    return pdfjs;
+  })();
+
+  try {
+    return await state.pdfLibLoading;
+  } finally {
+    state.pdfLibLoading = null;
+  }
+}
+
+function renderPdfPreviewShell(hw, pdfUrl) {
+  if (!els.homeworkPreviewContainer) return;
+  els.homeworkPreviewContainer.hidden = false;
+  els.homeworkPreviewContainer.innerHTML = `
+    <div class="homework-preview-header">
+      <span>Preview: ${escapeHtml(hw)}</span>
+      <button type="button" class="homework-preview-close" aria-label="Close preview">×</button>
+    </div>
+    <div class="homework-preview-body">
+      <div class="homework-preview-status" role="status" aria-live="polite">Loading PDF…</div>
+      <div class="homework-preview-pages" data-pdf-url="${escapeAttribute(pdfUrl)}"></div>
+    </div>
+  `;
+
+  const closeBtn = els.homeworkPreviewContainer.querySelector(".homework-preview-close");
+  if (closeBtn) closeBtn.addEventListener("click", () => clearHomeworkPreview());
+}
+
+async function renderPdfIntoContainer(pdfUrl, renderToken) {
+  if (!els.homeworkPreviewContainer) return;
+
+  const statusEl = els.homeworkPreviewContainer.querySelector(".homework-preview-status");
+  const pagesEl = els.homeworkPreviewContainer.querySelector(".homework-preview-pages");
+  if (!pagesEl) return;
+
+  // Safety checks for stale/closed renders
+  const isStale = () => (
+    renderToken !== state.pdfRenderToken ||
+    els.homeworkPreviewContainer.hidden ||
+    pagesEl.dataset.pdfUrl !== pdfUrl
+  );
+
+  try {
+    const pdfjs = await ensurePdfJsLoaded();
+    if (isStale()) return;
+
+    const loadingTask = pdfjs.getDocument({ url: pdfUrl });
+    const pdf = await loadingTask.promise;
+    if (isStale()) return;
+
+    // Clear any existing pages
+    pagesEl.innerHTML = "";
+
+    const containerWidth = Math.max(320, pagesEl.clientWidth || 800);
+
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+      if (isStale()) return;
+      if (statusEl) statusEl.textContent = `Rendering page ${pageNum} / ${pdf.numPages}…`;
+
+      const page = await pdf.getPage(pageNum);
+      if (isStale()) return;
+
+      const unscaled = page.getViewport({ scale: 1 });
+      const scale = Math.min(2, (containerWidth - 24) / unscaled.width);
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement("canvas");
+      canvas.className = "pdfjs-page";
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas 2D context unavailable");
+
+      pagesEl.appendChild(canvas);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+    }
+
+    if (statusEl) statusEl.remove();
+  } catch (err) {
+    if (isStale()) return;
+    const message = (err && typeof err.message === "string") ? err.message : String(err);
+    if (statusEl) {
+      statusEl.innerHTML = `
+        <div>Could not embed this PDF in-page.</div>
+        <div class="homework-preview-fallback">
+          <a href="${escapeAttribute(pdfUrl)}" target="_blank" rel="noopener">Open PDF in a new tab →</a>
+        </div>
+        <div class="homework-preview-error">${escapeHtml(message)}</div>
+      `;
+    }
+  }
+}
+
 function openPostModal(post) {
   if (!els.postModalBackdrop) return;
 
@@ -746,6 +886,9 @@ function openPostModal(post) {
       `<a href="${escapeAttribute(f.saved_as)}" target="_blank">📎 ${escapeHtml(f.original_filename)}</a>`
     ).join(" • ");
   }
+
+  // Reset any previous PDF preview when opening a post
+  clearHomeworkPreview();
   
   // Add homework link and preview
   renderHomeworkLink(post);
@@ -777,6 +920,9 @@ function getHomeworkPDFUrl(homeworkId) {
 
 function renderHomeworkLink(post) {
   if (!els.homeworkLinkContainer) return;
+
+  // Ensure stale previews from previous posts are cleared
+  clearHomeworkPreview();
   
   const hw = post.metrics?.homework_id || "Unknown";
   const pdfUrl = getHomeworkPDFUrl(hw);
@@ -787,7 +933,7 @@ function renderHomeworkLink(post) {
         <a href="${escapeAttribute(pdfUrl)}" target="_blank" class="homework-link">
           📄 ${escapeHtml(hw)} Assignment PDF
         </a>
-        <button class="homework-preview-toggle" data-pdf-url="${escapeAttribute(pdfUrl)}">
+        <button type="button" class="homework-preview-toggle" data-pdf-url="${escapeAttribute(pdfUrl)}">
           👁️ Preview PDF
         </button>
       </div>
@@ -796,30 +942,18 @@ function renderHomeworkLink(post) {
     // Add preview toggle handler
     const toggleBtn = els.homeworkLinkContainer.querySelector(".homework-preview-toggle");
     if (toggleBtn && els.homeworkPreviewContainer) {
-      toggleBtn.addEventListener("click", () => {
+      toggleBtn.addEventListener("click", async () => {
         const isHidden = els.homeworkPreviewContainer.hidden;
-        els.homeworkPreviewContainer.hidden = !isHidden;
-        
-        if (!isHidden) {
-          // Show preview
-          els.homeworkPreviewContainer.innerHTML = `
-            <div class="homework-preview-header">
-              <span>Preview: ${escapeHtml(hw)}</span>
-              <button class="homework-preview-close">×</button>
-            </div>
-            <iframe 
-              src="${escapeAttribute(pdfUrl)}#toolbar=0&navpanes=0&scrollbar=1" 
-              class="homework-preview-iframe"
-              title="Homework PDF Preview">
-            </iframe>
-          `;
-          
-          const closeBtn = els.homeworkPreviewContainer.querySelector(".homework-preview-close");
-          if (closeBtn) {
-            closeBtn.addEventListener("click", () => {
-              els.homeworkPreviewContainer.hidden = true;
-            });
-          }
+
+        // If currently hidden, show + render. Otherwise hide + clear.
+        if (isHidden) {
+          // Render via pdf.js so Safari/blocked embeds don't download.
+          const renderToken = state.pdfRenderToken + 1;
+          state.pdfRenderToken = renderToken;
+          renderPdfPreviewShell(hw, pdfUrl);
+          await renderPdfIntoContainer(pdfUrl, renderToken);
+        } else {
+          clearHomeworkPreview();
         }
       });
     }
@@ -887,6 +1021,7 @@ function renderSimilarPosts(post) {
 
 function closePostModal() {
   if (!els.postModalBackdrop) return;
+  clearHomeworkPreview();
   els.postModalBackdrop.hidden = true;
   els.postModalBackdrop.setAttribute("hidden", "");
   document.body.classList.remove("modal-open");
