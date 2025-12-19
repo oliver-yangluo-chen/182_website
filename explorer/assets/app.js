@@ -205,6 +205,9 @@ function switchSection(sectionName) {
   
   // Update URL
   window.history.replaceState(null, "", `#${sectionName}`);
+
+  // Home should not scroll (prevents 1px overflow scrollbars)
+  document.body.classList.toggle("no-scroll", sectionName === "home");
   
   // If switching to browse, ensure posts are rendered
   if (sectionName === "browse" && state.allPosts.length > 0) {

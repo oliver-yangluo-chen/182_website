@@ -148,6 +148,10 @@ body {
   position: relative;
 }
 
+body.no-scroll {
+  overflow-y: hidden;
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -336,6 +340,22 @@ img {
   display: block;
 }
 
+/* Home: center content and avoid pointless scrolling */
+#home.section.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 64px);
+  padding: 0 var(--spacing-lg);
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  #home.section.active {
+    height: calc(100dvh - 64px);
+  }
+}
+
 /* =========================================
    HERO SECTION
    ========================================= */
@@ -350,6 +370,11 @@ img {
 .hero-content {
   text-align: center;
   margin-bottom: var(--spacing-2xl);
+}
+
+/* Slightly tighter spacing on Home to ensure it fits without scrolling */
+#home .hero-content {
+  margin-bottom: var(--spacing-xl);
 }
 
 .hero-title {
@@ -509,6 +534,10 @@ img {
   gap: var(--spacing-lg);
   margin-top: var(--spacing-2xl);
   max-width: 100%;
+}
+
+#home .stats-dashboard {
+  margin-top: var(--spacing-xl);
 }
 
 .stat-card {
