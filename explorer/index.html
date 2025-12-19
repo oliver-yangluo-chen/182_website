@@ -223,10 +223,24 @@
     <!-- Browse Section -->
     <section id="browse" class="section">
       <div class="browse-container">
-        <!-- Filter Bar with Tags -->
+        <!-- Filter Bar with Dropdowns and Tags -->
         <div class="filter-bar">
           <div class="filter-section">
             <h3 class="filter-title">Filters</h3>
+            <div class="filter-dropdowns">
+              <div class="filter-dropdown-group">
+                <label for="filter-homework">Homework:</label>
+                <select id="filter-homework" class="filter-select">
+                  <option value="">All Homeworks</option>
+                </select>
+              </div>
+              <div class="filter-dropdown-group">
+                <label for="filter-model">LLM:</label>
+                <select id="filter-model" class="filter-select">
+                  <option value="">All LLMs</option>
+                </select>
+              </div>
+            </div>
             <div class="filter-tags" id="filter-tags">
               <!-- Tags will be dynamically generated -->
             </div>
@@ -444,34 +458,31 @@
     <section id="compare" class="section">
       <div class="compare-container">
         <div class="compare-header">
-          <h2>⚖️ Compare Posts</h2>
-          <p class="compare-subtitle">Side-by-side comparison of posts</p>
-    </div>
+          <h2>⚖️ Compare LLM Solutions</h2>
+          <p class="compare-subtitle">Compare how different LLMs performed on the same homework assignment</p>
+        </div>
 
         <div class="compare-controls">
           <div class="compare-select-group">
-            <label>Post 1:</label>
-            <select id="compare-post-1" class="compare-select">
-              <option value="">Select a post...</option>
+            <label for="compare-homework">Select Homework:</label>
+            <select id="compare-homework" class="compare-select">
+              <option value="">Choose a homework...</option>
             </select>
           </div>
-          <div class="compare-select-group">
-            <label>Post 2:</label>
-            <select id="compare-post-2" class="compare-select">
-              <option value="">Select a post...</option>
-            </select>
-          </div>
-          <button id="compare-add-post" class="compare-add-btn" hidden>+ Add Post 3</button>
-    </div>
+        </div>
 
         <div id="compare-results" class="compare-results" hidden>
+          <div class="compare-llms-header">
+            <h3 id="compare-homework-title"></h3>
+            <p class="compare-instructions">All LLM solutions for this homework are shown below for easy comparison</p>
+          </div>
           <div class="compare-posts-grid" id="compare-posts-grid">
             <!-- Comparison cards will be rendered here -->
           </div>
         </div>
         
         <div class="compare-empty" id="compare-empty">
-          <p>Select two posts above to compare them side-by-side</p>
+          <p>Select a homework assignment above to see all LLM solutions for comparison</p>
         </div>
       </div>
     </section>

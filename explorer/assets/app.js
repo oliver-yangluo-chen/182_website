@@ -62,6 +62,8 @@ function cacheElements() {
   els.statAuthors = document.getElementById("stat-authors");
   
   // Browse
+  els.filterHomework = document.getElementById("filter-homework");
+  els.filterModel = document.getElementById("filter-model");
   els.filterTags = document.getElementById("filter-tags");
   els.viewButtons = document.querySelectorAll(".view-btn");
   els.sortSelect = document.getElementById("sort-select");
@@ -94,9 +96,8 @@ function cacheElements() {
   els.similarPostsContainer = document.getElementById("similar-posts-container");
   
   // Comparison
-  els.comparePost1 = document.getElementById("compare-post-1");
-  els.comparePost2 = document.getElementById("compare-post-2");
-  els.compareAddBtn = document.getElementById("compare-add-post");
+  els.compareHomework = document.getElementById("compare-homework");
+  els.compareHomeworkTitle = document.getElementById("compare-homework-title");
   els.compareResults = document.getElementById("compare-results");
   els.comparePostsGrid = document.getElementById("compare-posts-grid");
   els.compareEmpty = document.getElementById("compare-empty");
@@ -254,6 +255,43 @@ function updateStatistics() {
 }
 
 // =========================================
+// DROPDOWN FILTERS
+// =========================================
+function setupFilterDropdowns() {
+  if (!els.filterHomework || !els.filterModel) return;
+  
+  // Populate homework dropdown
+  const sortedHomeworks = Array.from(state.availableTags.homeworks).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.replace(/\D/g, '')) || 0;
+    return numA - numB;
+  });
+  
+  els.filterHomework.innerHTML = '<option value="">All Homeworks</option>' + 
+    sortedHomeworks.map(hw => 
+      `<option value="${escapeAttribute(hw)}" ${state.activeFilters.homework === hw ? 'selected' : ''}>${escapeHtml(hw)}</option>`
+    ).join("");
+  
+  // Populate model dropdown
+  const sortedModels = Array.from(state.availableTags.models).sort();
+  els.filterModel.innerHTML = '<option value="">All LLMs</option>' + 
+    sortedModels.map(model => 
+      `<option value="${escapeAttribute(model)}" ${state.activeFilters.model === model ? 'selected' : ''}>${escapeHtml(model)}</option>`
+    ).join("");
+  
+  // Add change handlers
+  els.filterHomework.addEventListener("change", (e) => {
+    state.activeFilters.homework = e.target.value || null;
+    applyFiltersAndRender();
+  });
+  
+  els.filterModel.addEventListener("change", (e) => {
+    state.activeFilters.model = e.target.value || null;
+    applyFiltersAndRender();
+  });
+}
+
+// =========================================
 // TAG-BASED FILTERING
 // =========================================
 function buildFilterTags() {
@@ -308,6 +346,10 @@ function buildFilterTags() {
       } else if (type === "model") {
         state.activeFilters.model = state.activeFilters.model === value ? null : value;
       }
+      
+      // Sync dropdowns
+      if (els.filterHomework) els.filterHomework.value = state.activeFilters.homework || "";
+      if (els.filterModel) els.filterModel.value = state.activeFilters.model || "";
       
       applyFiltersAndRender();
       });
@@ -433,6 +475,7 @@ function applyFiltersAndRender() {
   renderPosts();
   updateResultsSummary();
   buildFilterTags();
+  setupFilterDropdowns();
 }
 
 function sortResults(list, order) {
@@ -1262,67 +1305,91 @@ function setupAssistant() {
 }
 
 // =========================================
-// COMPARISON VIEW
+// COMPARISON VIEW (Homework-First)
 // =========================================
-let comparisonPosts = [];
 
 function setupComparison() {
-  if (!els.comparePost1 || !els.comparePost2) return;
+  if (!els.compareHomework) return;
   
-  // Populate dropdowns when data loads
+  // Populate homework dropdown when data loads
   if (state.allPosts.length > 0) {
     populateComparisonDropdowns();
   }
   
-  els.comparePost1.addEventListener("change", () => updateComparison());
-  els.comparePost2.addEventListener("change", () => updateComparison());
+  els.compareHomework.addEventListener("change", () => updateComparisonHomework());
 }
 
 function populateComparisonDropdowns() {
-  const options = state.allPosts.map((post, index) => {
-    const hw = post.metrics?.homework_id || "Unknown";
-    const model = post.metrics?.model_name || "Unknown";
-    const title = post.title || "Untitled";
-    return `<option value="${index}">${escapeHtml(title)} (${escapeHtml(hw)}, ${escapeHtml(model)})</option>`;
-  }).join("");
+  const homeworks = new Set();
+  state.allPosts.forEach(post => {
+    const hw = post.metrics?.homework_id;
+    if (hw) homeworks.add(hw);
+  });
   
-  if (els.comparePost1) {
-    els.comparePost1.innerHTML = `<option value="">Select a post...</option>${options}`;
-  }
-  if (els.comparePost2) {
-    els.comparePost2.innerHTML = `<option value="">Select a post...</option>${options}`;
+  const sortedHomeworks = Array.from(homeworks).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.replace(/\D/g, '')) || 0;
+    return numA - numB;
+  });
+  
+  if (els.compareHomework) {
+    els.compareHomework.innerHTML = '<option value="">Choose a homework...</option>' +
+      sortedHomeworks.map(hw => `<option value="${escapeAttribute(hw)}">${escapeHtml(hw)}</option>`).join("");
   }
 }
 
-function updateComparison() {
-  const index1 = parseInt(els.comparePost1?.value);
-  const index2 = parseInt(els.comparePost2?.value);
+function updateComparisonHomework() {
+  const selectedHomework = els.compareHomework?.value;
   
-  if (isNaN(index1) || isNaN(index2)) {
+  if (!selectedHomework) {
     if (els.compareResults) els.compareResults.hidden = true;
     if (els.compareEmpty) els.compareEmpty.hidden = false;
     return;
   }
   
-  const post1 = state.allPosts[index1];
-  const post2 = state.allPosts[index2];
+  // Update title
+  if (els.compareHomeworkTitle) {
+    els.compareHomeworkTitle.textContent = `All LLM Solutions for ${selectedHomework}`;
+  }
   
-  if (!post1 || !post2) return;
-  
-  comparisonPosts = [post1, post2];
-  renderComparison();
+  renderComparison(selectedHomework);
   
   if (els.compareResults) els.compareResults.hidden = false;
   if (els.compareEmpty) els.compareEmpty.hidden = true;
 }
 
-function renderComparison() {
-  if (!els.comparePostsGrid) return;
+function renderComparison(selectedHomework) {
+  if (!els.comparePostsGrid || !selectedHomework) return;
   
-  els.comparePostsGrid.innerHTML = comparisonPosts.map((post, idx) => {
+  // Get all posts for this homework
+  const postsForHomework = state.allPosts.filter(post => 
+    post.metrics?.homework_id === selectedHomework
+  );
+  
+  if (postsForHomework.length === 0) {
+    els.comparePostsGrid.innerHTML = '<p class="compare-instructions">No posts found for this homework assignment.</p>';
+    return;
+  }
+  
+  // Group by LLM (show one post per LLM, prefer most recent)
+  const postsByModel = new Map();
+  postsForHomework.forEach(post => {
+    const model = post.metrics?.model_name;
+    if (model) {
+      if (!postsByModel.has(model) || 
+          new Date(post.created_at || 0) > new Date(postsByModel.get(model).created_at || 0)) {
+        postsByModel.set(model, post);
+      }
+    }
+  });
+  
+  // Sort by model name for consistent display
+  const sortedModels = Array.from(postsByModel.keys()).sort();
+  
+  els.comparePostsGrid.innerHTML = sortedModels.map(model => {
+    const post = postsByModel.get(model);
     const m = post.metrics || {};
     const hw = m.homework_id || "Unknown";
-    const model = m.model_name || "Unknown";
     const created = post.created_at ? new Date(post.created_at) : null;
     const createdStr = created && !isNaN(created.getTime()) 
       ? created.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
@@ -1334,37 +1401,33 @@ function renderComparison() {
     return `
       <div class="compare-post-card">
         <div class="compare-post-header">
-          <h3>Post ${idx + 1}</h3>
+          <h3>${escapeHtml(model)}</h3>
           <button class="compare-post-open-btn" data-post-index="${state.allPosts.indexOf(post)}">
             Open Full Post
           </button>
-                  </div>
+        </div>
         <div class="compare-post-title">
           <h4>${escapeHtml(post.title || "Untitled")}</h4>
-                </div>
+        </div>
         <div class="compare-post-meta">
           <span>${escapeHtml(createdStr)}</span>
           <span>•</span>
           <span>${escapeHtml(author)}</span>
-                </div>
-        <div class="compare-post-badges">
-          <span class="badge badge-hw">${escapeHtml(hw)}</span>
-          <span class="badge badge-model">${escapeHtml(model)}</span>
-           </div>
+        </div>
         ${pdfUrl ? `
           <div class="compare-post-homework-link">
             <a href="${escapeAttribute(pdfUrl)}" target="_blank">📄 View ${escapeHtml(hw)} PDF</a>
-        </div>
+          </div>
         ` : ""}
         <div class="compare-post-body">
-          <p>${escapeHtml(bodyText.substring(0, 500))}${bodyText.length > 500 ? "..." : ""}</p>
-      </div>
+          <p>${escapeHtml(bodyText.substring(0, 800))}${bodyText.length > 800 ? "..." : ""}</p>
+        </div>
         ${post.ed_url ? `
           <div class="compare-post-footer">
             <a href="${escapeAttribute(post.ed_url)}" target="_blank">View on Ed →</a>
           </div>
         ` : ""}
-        </div>
+      </div>
     `;
   }).join("");
   
@@ -1732,6 +1795,7 @@ async function init() {
     state.insights = insights;
     
     updateStatistics();
+    setupFilterDropdowns();
     buildFilterTags();
     applyFiltersAndRender();
     renderAnalytics();
