@@ -296,44 +296,43 @@ function setupFilterDropdowns() {
 // =========================================
 function buildFilterTags() {
   if (!els.filterTags) return;
-  
-  const tags = [];
-  
+
+  const renderTagButton = (tag) => `
+    <button class="filter-tag ${tag.active ? 'active' : ''}"
+            data-type="${tag.type}"
+            data-value="${escapeAttribute(tag.value)}">
+      ${escapeHtml(tag.label)}
+    </button>
+  `;
+
   // Homework tags
   const sortedHomeworks = Array.from(state.availableTags.homeworks).sort((a, b) => {
     const numA = parseInt(a.replace(/\D/g, '')) || 0;
     const numB = parseInt(b.replace(/\D/g, '')) || 0;
     return numA - numB;
   });
-  
-  sortedHomeworks.forEach(hw => {
-    tags.push({
-      type: "homework",
-      value: hw,
-      label: hw,
-      active: state.activeFilters.homework === hw
-    });
-  });
-  
+
+  const homeworkTagsHtml = sortedHomeworks.map(hw => renderTagButton({
+    type: "homework",
+    value: hw,
+    label: hw,
+    active: state.activeFilters.homework === hw
+  })).join("");
+
   // Model tags
   const sortedModels = Array.from(state.availableTags.models).sort();
-  sortedModels.forEach(model => {
-    tags.push({
-      type: "model",
-      value: model,
-      label: model,
-      active: state.activeFilters.model === model
-    });
-  });
-  
-  // Render tags
-  els.filterTags.innerHTML = tags.map(tag => `
-    <button class="filter-tag ${tag.active ? 'active' : ''}" 
-            data-type="${tag.type}" 
-            data-value="${escapeAttribute(tag.value)}">
-      ${escapeHtml(tag.label)}
-    </button>
-  `).join("");
+  const modelTagsHtml = sortedModels.map(model => renderTagButton({
+    type: "model",
+    value: model,
+    label: model,
+    active: state.activeFilters.model === model
+  })).join("");
+
+  // Render as two independent wrapping rows so they never mix
+  els.filterTags.innerHTML = `
+    <div class="filter-tags-group" data-group="homework">${homeworkTagsHtml}</div>
+    <div class="filter-tags-group" data-group="model">${modelTagsHtml}</div>
+  `;
   
   // Add click handlers
   els.filterTags.querySelectorAll(".filter-tag").forEach(btn => {
@@ -606,20 +605,28 @@ function renderPostCard(post, index) {
   const m = post.metrics || {};
   const hw = m.homework_id || "Unknown";
   const model = m.model_name || "Unknown";
-  const created = post.created_at ? new Date(post.created_at) : null;
-  const createdStr = created && !isNaN(created.getTime()) 
-    ? created.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : "";
+  const createdStr = formatCardDate(post.created_at);
   const author = post.user?.name || "Unknown";
   const preview = (post.document || "").substring(0, 150).replace(/\n/g, " ");
   const readingTime = calculateReadingTime(post.document || "");
   const postId = post.number || post.id || index;
   const isBookmarked = (state.bookmarks instanceof Set) && state.bookmarks.has(String(postId));
+
+  const metaItems = [];
+  if (createdStr) metaItems.push({ text: createdStr, className: "post-card-meta-item" });
+  if (author) metaItems.push({ text: author, className: "post-card-meta-item post-card-meta-author" });
+  const metaHtml = metaItems
+    .map(i => `<span class="${i.className}">${escapeHtml(i.text)}</span>`)
+    .join('<span class="post-card-meta-sep">•</span>');
+
+  const footerLeftParts = [];
+  if (typeof post.view_count === "number") footerLeftParts.push(`${post.view_count} views`);
+  if (readingTime > 0) footerLeftParts.push(`${readingTime} min read`);
+  const footerLeft = footerLeftParts.join(" • ");
   
   return `
 <article class="post-card" data-index="${index}" data-post-id="${postId}">
       <div class="post-card-header">
-        <h3 class="post-card-title">${escapeHtml(post.title || "Untitled")}</h3>
         <div class="post-card-actions">
           <button class="post-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" data-post-id="${postId}" onclick="event.stopPropagation()" title="${isBookmarked ? 'Remove bookmark' : 'Add bookmark'}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
@@ -633,12 +640,8 @@ function renderPostCard(post, index) {
             </svg>
           </button>
     </div>
-        <div class="post-card-meta">
-          <span>${escapeHtml(createdStr)}</span>
-          <span>•</span>
-          <span>${escapeHtml(author)}</span>
-          ${readingTime > 0 ? `<span>•</span><span>${readingTime} min read</span>` : ''}
-  </div>
+        <h3 class="post-card-title">${escapeHtml(post.title || "Untitled")}</h3>
+        ${metaHtml ? `<div class="post-card-meta">${metaHtml}</div>` : ''}
   </div>
       <div class="post-card-badges">
         <span class="badge badge-hw">${escapeHtml(hw)}</span>
@@ -646,11 +649,35 @@ function renderPostCard(post, index) {
       </div>
       <p class="post-card-preview">${escapeHtml(preview)}${preview.length >= 150 ? "..." : ""}</p>
       <div class="post-card-footer">
-        <span>${typeof post.view_count === "number" ? `${post.view_count} views` : ""}</span>
+        ${footerLeft ? `<span>${escapeHtml(footerLeft)}</span>` : "<span></span>"}
         ${post.ed_url ? `<a href="${escapeAttribute(post.ed_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">View on Ed →</a>` : ""}
       </div>
     </article>
   `;
+}
+
+function formatCardDate(isoString) {
+  if (!isoString || typeof isoString !== "string") return "";
+
+  // Prefer the YYYY-MM-DD portion to avoid user-timezone shifting dates.
+  const datePart = isoString.split("T")[0];
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : null;
+
+  let dateObj = null;
+  if (dateOnly) {
+    dateObj = new Date(`${dateOnly}T00:00:00Z`);
+  } else {
+    dateObj = new Date(isoString);
+  }
+
+  if (isNaN(dateObj.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(dateObj);
 }
 
 // =========================================
